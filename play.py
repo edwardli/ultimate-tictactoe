@@ -1,36 +1,40 @@
-import models
 import constants
+from models import BigBoard
+from sys import argv
+from ai import AI
 
-game = models.BigBoard()
-print 'Welcome to Ultimate Tic-Tac-Toe! X goes first. Denote moves' \
-      'with two ordered pairs; the first denotes the small square,' \
-      'and the second denotes the position within that square.\n\n' \
-      'Example move: (1,1),(1,1)'
-
-while not game.getState(): # game ongoing
-    print game
-    move = raw_input('Enter your move: ')
-    try:
-        board = (int(move[1]),int(move[3]))
-        position = (int(move[7]),int(move[9]))
-    except:
-        board = (3,3)
-        position = (3,3)
-
-    while game.makeMove(board,position) == constants.ILLEGAL_MOVE:
-        move = raw_input('Illegal move. Try again: ')
-        try:
-            board = (int(move[1]), int(move[3]))
-            position = (int(move[7]), int(move[9]))
-        except:
-            board = (3, 3)
-            position = (3, 3)
-
-result = game.getState()
-
-if result == constants.X_WIN:
-    print 'X wins!'
-elif result == constants.O_WIN:
-    print 'O wins!'
-else:
-    print 'Tie game!'
+def main(args):
+    gameType = args[1] if len(args) > 1 else constants.NO_AI
+    game = BigBoard()
+    ai = AI(game)
+    print 'Welcome to Ultimate Tic-Tac-Toe! X goes first. Denote moves ' \
+          'with an ordered pair (row, col) where the top left is (0,0)\n\n' \
+          'Example move: 4,4'
+    
+    if gameType == constants.TWO_AI:
+        pass
+    else:
+        print game
+        while not game.getState(): # game ongoing
+            move = raw_input('Enter your move: ')
+            try:
+                coords = (int(move[0]),int(move[2]))
+            except:
+                coords = (9,9)
+            if game.makeMove(coords) == constants.ILLEGAL_MOVE:
+                print 'Illegal move. Try again: '
+            else:
+                print game
+                if gameType == constants.ONE_AI and not game.getState():
+                    game.makeMove(ai.getNextMove())
+                    print game
+        
+        result = game.getState()
+        if result == constants.X_WIN:
+            print 'X wins!'
+        elif result == constants.O_WIN:
+            print 'O wins!'
+        else:
+            print 'Tie game!'
+            
+main(argv)

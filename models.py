@@ -27,14 +27,14 @@ class SmallBoard(object):
         :param x: The x-coordinate of this row.
         :return: An ascii representation of row x.
         """
-        result = '|'
+        result = ' '
         for square in self._board[x]:
             if square == 1:
-                result += 'X|'
+                result += 'X '
             elif square == -1:
-                result += 'O|'
+                result += 'O '
             else:
-                result += ' |'
+                result += '  '
         return result
 
     def makeMove(self, coords, side):
@@ -133,13 +133,13 @@ class BigBoard(object):
         self._state = constants.ONGOING
 
     def __repr__(self):
-        r = '-----------------------------\n'
+        r = '\n'
         for row in self._board:
             for line in range(3):
-                r += ' '+row[0].asciifyRow(line)+' $ '+row[1].asciifyRow(line)+' $ '+row[2].asciifyRow(line) +' \n'
+                r += ' '+row[0].asciifyRow(line)+' | '+row[1].asciifyRow(line)+' | '+row[2].asciifyRow(line) +' \n'
             r += '-----------------------------\n'
 
-        return r
+        return r[0:-30]
 
 
 
@@ -219,3 +219,12 @@ class BigBoard(object):
                 if not self._board[x][y].getState(): # the board is ongoing, so it's a legal board
                     self._legalboards.append((x,y))
         return
+
+    def getTurn(self):
+        return self._turn
+
+    def getLegalBoard(self):
+        return self._legalboards
+
+    def getState(self):
+        return self._state

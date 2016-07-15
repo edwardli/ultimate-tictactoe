@@ -113,6 +113,36 @@ class SmallBoard(object):
             self._state = constants.ONGOING
             return
 
+    def evaluateBoard(self):
+        """
+        Returns float between 0 and 1, where 0 is x winning and 1 is o winning
+        """
+        if self._state == constants.TIE:
+            return 0.5
+        elif self._state == constants.O_WIN:
+            return 1
+        elif self._state == constants.X_WIN:
+            return 0
+        
+        board = self._board
+        h = 0
+        for i in xrange(len(board)):
+            rowsum = 0
+            colsum = 0
+            for j in xrange(len(board[i])):
+                rowsum += board[i][j]
+                colsum += board[j][i]
+            if abs(rowsum) == 2:
+                h -= rowsum
+            if abs(rowsum) == 1:
+                h += rowsum
+            if abs(colsum) == 2:
+                h -= colsum
+            if abs(colsum) == 1:
+                h += colsum
+                    
+        return .5 + .4 * h
+    
     def backUp(self):
         self._backUpBoard = deepcopy(self._board)
         self._backUpState = self._state
@@ -230,7 +260,10 @@ class BigBoard(object):
         """
         Returns float between 0 and 1, where 0 is x winning and 1 is o winning
         """
-        pass
+        h = 0
+        for board in self._board:
+            h += board.evaluateBoard()
+        return float(h)/len(self._board)
     
     def determineSmallBoard(self, coords):
         return 3 * (coords[0] / 3) + (coords[1] / 3)

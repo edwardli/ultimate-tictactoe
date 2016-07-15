@@ -33,6 +33,7 @@ class AI(object):
                     bestMove = move
                     bestVal = moveVal
         print "AI Move:(" + str(bestMove[0]) + "," + str(bestMove[1]) + ")\nAI Estimated Win Chance: " + str(bestVal)
+        print self.board.evaluateBoard()
         return bestMove
     
     def simulateOnce(self, simulationNum):

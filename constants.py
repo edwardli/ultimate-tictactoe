@@ -1,3 +1,4 @@
+
 # SIDE CONSTANTS
 X = 1
 O = -1
@@ -10,3 +11,10 @@ TIE     = 6 # chosen so win checking is easily performed.
 
 # MOVE TYPES
 ILLEGAL_MOVE = -6
+
+# GAME Types
+NO_AI = "human"
+ONE_AI = "ai"
+TWO_AI = "debug"
+
+DEPTH = 4

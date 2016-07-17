@@ -74,6 +74,8 @@ class GameNode(object):
             return 1
         elif state == self.side * -1:
             return -1
+        elif state == constants.TIE:
+            return 0
         else:
             advantage = 0
             disadvantage = 0

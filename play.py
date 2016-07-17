@@ -2,17 +2,26 @@ import constants
 from models import BigBoard
 from sys import argv
 from ai import AI
+from MCTS_AI import MCTSAI
 
 def main(args):
     gameType = args[1] if len(args) > 1 else constants.NO_AI
     game = BigBoard()
-    ai = AI(game)
+    ai = MCTSAI(game, timeLimit = 7500)
     print 'Welcome to Ultimate Tic-Tac-Toe! X goes first. Denote moves ' \
           'with an ordered pair (row, col) where the top left is (0,0)\n\n' \
           'Example move: 4,4'
     
     if gameType == constants.TWO_AI:
-        pass
+        ai2 = AI(game)
+        print game
+        while not game.getState():
+            game.makeMove(ai2.getNextMove())
+            print game
+            if not game.getState():
+                game.makeMove(ai.getNextMove())
+                print game
+        
     else:
         print game
         while not game.getState(): # game ongoing
@@ -29,12 +38,12 @@ def main(args):
                     game.makeMove(ai.getNextMove())
                     print game
         
-        result = game.getState()
-        if result == constants.X_WIN:
-            print 'X wins!'
-        elif result == constants.O_WIN:
-            print 'O wins!'
-        else:
-            print 'Tie game!'
+    result = game.getState()
+    if result == constants.X_WIN:
+        print 'X wins!'
+    elif result == constants.O_WIN:
+        print 'O wins!'
+    else:
+        print 'Tie game!'
             
 main(argv)

@@ -1,91 +1,106 @@
-import models
 import constants
-import time
-from math import sqrt, log
 
 class AI(object):
-    
-    def __init__(self, board, side = constants.O, timeLimit = 10000, searchDepth = -1):
-        self.board = board
-        self.side = side
-        self.timeLimit = timeLimit
-        self.searchDepth = searchDepth
-        
+    """
+    An AI implementing the minimax algorithm.
+
+    Attributes:
+        _game: The BigBoard object representing the game.
+        _gameTree: Used for the minimax tree expansion of this game.
+    """
+    def __init__(self, game):
+        self._game = game
+        self._gameTree = None
+
     def getNextMove(self):
-        self.weights = {}
-        curr = int(time.time() * 1000)
-        stop = curr + self.timeLimit
-        simNum = 0
-        while curr < stop:
-            self.board.backUp()
-            moveList, outcome = self.simulateOnce(simNum)
-            self.updateWeights(moveList, outcome)
-            self.board.restore()
-            curr = int(time.time() * 1000)
-            simNum += 1
-        
-        bestVal = 0
-        for move in self.board.getLegalMoves():
-            moveKey = (move[0], move[1], self.board.getMoveNum() + 1)
-            if moveKey in self.weights:
-                moveVal = float(self.weights[moveKey][0])/ self.weights[moveKey][1]
-                if moveVal > bestVal:
-                    bestMove = move
-                    bestVal = moveVal
-        print "AI Move:(" + str(bestMove[0]) + "," + str(bestMove[1]) + ")\nAI Estimated Win Chance: " + str(bestVal)
-        return bestMove
-    
-    def simulateOnce(self, simulationNum):
-        depth = self.searchDepth
-        board = self.board
-        moveList = []
-        t = simulationNum + 1 #number of simulations run on parent node
-        c = 2 #constant multiplier for expansion term
-        
-        while depth and (not board.getState()):
-            moveOptions = board.getLegalMoves()
-            moveNum = board.getMoveNum() + 1
-            
-            bestValue = float('-inf')
-            for move in moveOptions:
-                moveKey = (move[0], move[1], moveNum)
-                if moveKey in self.weights:
-                    exploitation = float(self.weights[moveKey][0])/self.weights[moveKey][1]
-                    if board.getTurn() != self.side:
-                        exploitation = 1 - exploitation
-                    expansion = sqrt(c * log(t) / self.weights[moveKey][1])
+        self._gameTree = GameNode(self._game, self._game.getTurn())
+        self._gameTree.expandUpTo(constants.DEPTH)
+        bestIndex = -1
+        bestValue = -1
+        gameChoices = self._gameTree.children
+        for index in xrange(len(gameChoices)):
+            value = gameChoices[index].minimax(False)
+            if value > bestValue:
+                bestValue = value
+                bestIndex = index
+        return self._game.getLegalMoves()[bestIndex]
+
+
+
+
+class GameNode(object):
+    """Like a game, but can act as a tree."""
+    def __init__(self, game, side):
+        self.side = side
+        self.game = game
+        self.children = []
+
+    def expandUpTo(self, depth):
+        if depth <= 0:
+            return
+
+        for move in self.game.getLegalMoves():
+            self.game.backUp()
+            self.game.makeMove(move)
+            self.children.append(GameNode(self.game.makeCopy(), self.side))
+            self.game.restore()
+
+        for child in self.children:
+            child.expandUpTo(depth-1)
+
+    def minimax(self, maxPlayer): # credits to wikipedia article for minimax for the pseudocode
+        if len(self.children) == 0:
+            return self.evaluate()
+
+        if maxPlayer:
+            bestValue = -2
+            for child in self.children:
+                value = child.minimax(False)
+                bestValue = max(bestValue, value)
+            return bestValue
+
+        else:
+            bestValue = 2
+            for child in self.children:
+                value = child.minimax(True)
+                bestValue = min(bestValue, value)
+            return bestValue
+
+
+    def evaluate(self):
+        state = self.game.getState()
+        if state == self.side:
+            return 1
+        elif state == self.side * -1:
+            return -1
+        elif state == constants.TIE:
+            return 0
+        else:
+            advantage = 0
+            disadvantage = 0
+            won = 0
+            lost = 0
+            tie = 0
+            for smallboard in self.game._board:
+                if smallboard.getState() == self.side:
+                    won += 1
+                elif smallboard.getState() == self.side * -1:
+                    lost += 1
+                elif smallboard.getState() == constants.TIE:
+                    tie += 1
                 else:
-                    exploitation = 0.5
-                    expansion = sqrt(c * log(t))
-                
-                moveValue = exploitation + expansion
-                if moveValue > bestValue:
-                    bestValue = moveValue
-                    bestMove = move
-            board.makeMove(bestMove)
-            bestMoveKey = (bestMove[0], bestMove[1], board.getMoveNum())
-            moveList.append(bestMoveKey)
-            depth -= 1
-            if bestMoveKey in self.weights:
-                t = self.weights[bestMoveKey][1] + 1
-            else:
-                t = 1
-        
-        if not board.getState():
-            outcome = board.evaluateBoard()
-        elif board.getState() == constants.TIE:
-            outcome = .5
-        elif board.getState() == constants.X_WIN:
-            outcome = 0
-        elif board.getState() == constants.O_WIN:
-            outcome = 1
-            
-        return (moveList, outcome if self.side == constants.O else 1 - outcome)
-    
-    def updateWeights(self, moveList, outcome):
-        for move in moveList:
-            if move in self.weights:
-                oldWeight = self.weights[move]
-                self.weights[move] = (oldWeight[0] + outcome, oldWeight[1] + 1)
-            else:
-                self.weights[move] = (outcome, 1)
+                    friendly = 0
+                    enemy = 0
+                    for row in smallboard.getBoard():
+                        for pos in row:
+                            if pos == friendly:
+                                friendly += 1
+                            elif pos == enemy:
+                                enemy += 1
+                    if friendly > enemy:
+                        advantage += 1
+                    elif friendly < enemy:
+                        disadvantage += 1
+                    else:
+                        tie += 1
+            return 0.05*advantage - 0.05*disadvantage + 0.1*won - 0.1*lost

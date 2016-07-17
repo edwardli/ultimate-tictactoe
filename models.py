@@ -4,9 +4,9 @@ from copy import deepcopy
 class SmallBoard(object):
     """
     Represents a 3x3 board.
-
     Note x varies vertically and y varies horizontally.
     """
+
     def __init__(self):
         """Initializer."""
         self._board = [
@@ -18,8 +18,8 @@ class SmallBoard(object):
 
     def __repr__(self):
         """Representation function."""
-        return (self.asciifyRow(0)+'\n'+
-                self.asciifyRow(1)+'\n'+
+        return (self.asciifyRow(0) + '\n' +
+                self.asciifyRow(1) + '\n' +
                 self.asciifyRow(2))
 
     def asciifyRow(self, x):
@@ -46,7 +46,8 @@ class SmallBoard(object):
         :return: a move type defined in constants. Integer.
         """
         assert (side == 1 or side == -1), 'invalid side'
-        assert (type(coords) == tuple and len(coords) == 2 and type(coords[0]) == int and type(coords[1]) == int), 'invalid coords'
+        assert (type(coords) == tuple and len(coords) == 2 and type(coords[0]) == int and type(
+            coords[1]) == int), 'invalid coords'
         assert (0 <= coords[0] and coords[0] <= 2 and 0 <= coords[1] and coords[1] <= 2), 'invalid coords'
 
         x, y = coords
@@ -57,7 +58,7 @@ class SmallBoard(object):
         self.updateState()
         return self._state
 
-    def getLegalMoves(self, rowOffset = 0, colOffset = 0):
+    def getLegalMoves(self, rowOffset=0, colOffset=0):
         ret = []
         if not self._state:
             for i in xrange(3):
@@ -65,7 +66,7 @@ class SmallBoard(object):
                     if not self._board[i][j]:
                         ret.append((i + rowOffset, j + colOffset))
         return ret
-            
+    
     def updateState(self):
         """
         :return: Win status of this board, defined in constants
@@ -82,10 +83,10 @@ class SmallBoard(object):
 
         # check horizontal and vertical, and check for empty spaces
         nospace = True
-        cols = [ # flipped orientation
-            [0,0,0],
-            [0,0,0],
-            [0,0,0]
+        cols = [  # flipped orientation
+            [0, 0, 0],
+            [0, 0, 0],
+            [0, 0, 0]
         ]
 
         for x in range(3):
@@ -96,13 +97,13 @@ class SmallBoard(object):
             for y in range(3):
                 square = self._board[x][y]
                 cols[y][x] = square
-                if not square: # square == 0
+                if not square:  # square == 0
                     nospace = False
 
         for col in cols:
             colsum = sum(col)
             if colsum == 3 or colsum == -3:
-                self._state = colsum/3
+                self._state = colsum / 3
                 return
 
         # tie or ongoing, depending on whether there is space left
@@ -132,16 +133,48 @@ class SmallBoard(object):
         :return: The game state.
         """
         return self._state
+    
+    def evaluateBoard(self):
+        """
+        Returns float between 0 and 1, where 0 is x winning and 1 is o winning
+        """
+        if self._state == constants.TIE:
+            return 0.5
+        elif self._state == constants.O_WIN:
+            return 1
+        elif self._state == constants.X_WIN:
+            return 0
+        
+        board = self._board
+        h = 0
+        for i in xrange(len(board)):
+            rowsum = 0
+            colsum = 0
+            for j in xrange(len(board[i])):
+                rowsum += board[i][j]
+                colsum += board[j][i]
+            if abs(rowsum) == 2:
+                h -= rowsum
+            if abs(rowsum) == 1:
+                h += rowsum
+            if abs(colsum) == 2:
+                h -= colsum
+            if abs(colsum) == 1:
+                h += colsum
+                    
+        return .5 + .4 * h
+
 
 
 class BigBoard(object):
     """
     Represents a 9x9 board, or a 3x3 board of 3x3 boards.
     """
+
     def __init__(self, first=constants.X):
-        self._board = [SmallBoard() for x in xrange(0,9)]
+        self._board = [SmallBoard() for x in xrange(0, 9)]
         self._turn = first
-        self._legalboards = [x for x in xrange(0,9)] # every board is legal
+        self._legalboards = [x for x in xrange(0, 9)]  # every board is legal
         self._state = constants.ONGOING
         self._moveNum = 0
 
@@ -150,7 +183,8 @@ class BigBoard(object):
         board = self._board
         for boardInd in xrange(0, len(board), 3):
             for row in xrange(3):
-                r += ' ' + board[boardInd].asciifyRow(row) + ' | ' + board[boardInd + 1].asciifyRow(row) + ' | ' + board[boardInd + 2].asciifyRow(row) + ' \n'
+                r += ' ' + board[boardInd].asciifyRow(row) + ' | ' + board[boardInd + 1].asciifyRow(row) + ' | ' + \
+                     board[boardInd + 2].asciifyRow(row) + ' \n'
             r += '-----------------------------\n'
 
         return r[0:-30]
@@ -180,8 +214,8 @@ class BigBoard(object):
         :param squarecords: The small square coordinates of the move just made.
         """
         board = self._board
-        self._turn *= -1 # switch the turn to the other side
-        del self._legalboards[:] # clear the legal boards in preparation for game end or new set of boards.
+        self._turn *= -1  # switch the turn to the other side
+        del self._legalboards[:]  # clear the legal boards in preparation for game end or new set of boards.
 
         # check diagonals
         diag1 = board[0].getState() + board[4].getState() + board[8].getState()
@@ -217,8 +251,8 @@ class BigBoard(object):
             return
 
         # ongoing if we got this far
-        if not board[3 * squarecoords[0] + squarecoords[1]].getState(): # target board is still going
-            self._legalboards.append(3 * squarecoords[0] + squarecoords[1]) # only add that one board
+        if not board[3 * squarecoords[0] + squarecoords[1]].getState():  # target board is still going
+            self._legalboards.append(3 * squarecoords[0] + squarecoords[1])  # only add that one board
             return
 
         for x in xrange(len(board)):
@@ -230,8 +264,12 @@ class BigBoard(object):
         """
         Returns float between 0 and 1, where 0 is x winning and 1 is o winning
         """
-        pass
-    
+        h = 0
+        for board in self._board:
+            h += board.evaluateBoard()
+        return float(h)/len(self._board)
+
+
     def determineSmallBoard(self, coords):
         return 3 * (coords[0] / 3) + (coords[1] / 3)
 
@@ -250,7 +288,7 @@ class BigBoard(object):
         self._backUpLegalBoards = deepcopy(self._legalboards)
         self._backUpState = self._state
         self._backUpMoveNum = self._moveNum
-    
+        
     def restore(self):
         for board in self._board:
             board.restore()
@@ -270,3 +308,18 @@ class BigBoard(object):
 
     def getState(self):
         return self._state
+
+    def makeCopy(self):
+        newBB = BigBoard()
+        newBB._state = self.getState()
+        newBB._turn = self.getTurn()
+        newBB._legalboards = self.getLegalBoard()
+        newBB._moveNum = self.getMoveNum()
+
+        for boardInd in range(len(self._board)):
+            newSB = newBB._board[boardInd]
+            oldSB = self._board[boardInd]
+            newSB._board = deepcopy(oldSB._board)
+            newSB._state = oldSB.getState()
+
+        return newBB

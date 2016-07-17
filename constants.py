@@ -1,3 +1,4 @@
+
 # SIDE CONSTANTS
 X = 1
 O = -1
@@ -15,3 +16,6 @@ ILLEGAL_MOVE = -6
 NO_AI = "human"
 ONE_AI = "ai"
 TWO_AI = "debug"
+TWO_AI = "debug"
+
+DEPTH = 4

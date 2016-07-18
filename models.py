@@ -147,22 +147,43 @@ class SmallBoard(object):
         
         board = self._board
         h = 0
+        
+        diag1 = self._board[0][0] + self._board[1][1] + self._board[2][2]
+        diag2 = self._board[0][2] + self._board[1][1] + self._board[2][0]
+        fullDiag1 = self._board[0][0] and self._board[1][1] and self._board[2][2]
+        fullDiag2 = self._board[0][2] and self._board[1][1] and self._board[2][0]
+        
+        if abs(diag1) == 2:
+            h -= diag1
+        if abs(diag1) == 1:
+            h += diag1 * (1 if fullDiag1 else -.25)
+        if abs(diag2) == 2:
+            h -= diag2
+        if abs(diag2) == 1:
+            h += diag2 * (1 if fullDiag2 else -.25)
+            
         for i in xrange(len(board)):
             rowsum = 0
             colsum = 0
+            fullRow = True
+            fullCol = True
             for j in xrange(len(board[i])):
                 rowsum += board[i][j]
                 colsum += board[j][i]
+                if board[i][j] == 0:
+                    fullRow = False
+                if board[j][i] == 0:
+                    fullCol = False;
             if abs(rowsum) == 2:
                 h -= rowsum
             if abs(rowsum) == 1:
-                h += rowsum
+                h += rowsum * (1 if fullRow else -.25)
             if abs(colsum) == 2:
                 h -= colsum
             if abs(colsum) == 1:
-                h += colsum
+                h += colsum * (1 if fullCol else -.25)
                     
-        return .5 + .4 * h
+        return .5 + .08 * h
 
 
 
@@ -264,10 +285,37 @@ class BigBoard(object):
         """
         Returns float between 0 and 1, where 0 is x winning and 1 is o winning
         """
+        board = self._board
         h = 0
-        for board in self._board:
-            h += board.evaluateBoard()
-        return float(h)/len(self._board)
+        for i in xrange(3):
+            rowsum = 0
+            colsum = 0
+            fullRow = True
+            fullCol = True
+            for j in xrange(3):
+                rowsum += board[3 * i + j].getState()
+                colsum += board[3 * j + i].getState()
+                if board[3 * i + j].getState() == constants.ONGOING:
+                    fullRow = False
+                if board[3 * j + i].getState() == constants.ONGOING:
+                    fullCol = False;
+            if abs(rowsum) == 2:
+                h -= rowsum
+            if abs(rowsum) == 1:
+                h += rowsum * (1 if fullRow else -.25)
+            if abs(colsum) == 2:
+                h -= colsum
+            if abs(colsum) == 1:
+                h += colsum * (1 if fullCol else -.25)
+        
+        h = .5 + .1 * h
+        h2 = 0
+        for i in xrange(len(board)):
+            h2 += board[i].evaluateBoard()
+            if i == 4:
+                h2 += board[i].evaluateBoard()
+        h2 = (float(h2)/(len(board) + 1))
+        return (h2 + h) / 2
 
 
     def determineSmallBoard(self, coords):
